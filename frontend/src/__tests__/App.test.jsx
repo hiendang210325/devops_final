@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import App from "../App.jsx";
 
 describe("App Component", () => {
@@ -8,7 +8,7 @@ describe("App Component", () => {
     // Mock fetch để trả về Promise mặc định cho các test không cần API
     fetch.mockResolvedValue({
       ok: true,
-      json: async () => []
+      json: async () => [],
     });
   });
 
