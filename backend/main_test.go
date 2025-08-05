@@ -9,6 +9,11 @@ import (
 )
 
 func TestHealthCheck(t *testing.T) {
+	// Skip test nếu không có database connection
+	if db == nil {
+		t.Skip("Skipping test - no database connection")
+	}
+
 	// Tạo request để truyền vào handler
 	req, err := http.NewRequest("GET", "/api/health", nil)
 	if err != nil {
@@ -46,6 +51,11 @@ func TestHealthCheck(t *testing.T) {
 }
 
 func TestCreateDestination(t *testing.T) {
+	// Skip test nếu không có database connection
+	if db == nil {
+		t.Skip("Skipping test - no database connection")
+	}
+
 	// Dữ liệu test
 	destination := Destination{
 		Name:        "Test Destination",
@@ -92,6 +102,11 @@ func TestCreateDestination(t *testing.T) {
 }
 
 func TestCreateDestinationInvalidData(t *testing.T) {
+	// Skip test nếu không có database connection
+	if db == nil {
+		t.Skip("Skipping test - no database connection")
+	}
+
 	// Test với JSON không hợp lệ
 	req, err := http.NewRequest("POST", "/api/destinations", bytes.NewBuffer([]byte("invalid json")))
 	if err != nil {
@@ -111,6 +126,11 @@ func TestCreateDestinationInvalidData(t *testing.T) {
 }
 
 func TestCreateDestinationEmptyFields(t *testing.T) {
+	// Skip test nếu không có database connection
+	if db == nil {
+		t.Skip("Skipping test - no database connection")
+	}
+
 	// Test với các trường rỗng
 	destination := Destination{
 		Name:        "",
