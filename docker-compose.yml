@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  # Database PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: travel_postgres
+    environment:
+      POSTGRES_DB: destinations
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - travel_network
+
+  # Backend API
+  backend:
+    build: ./backend
+    container_name: travel_backend
+    environment:
+      DATABASE_URL: postgres://postgres:password@postgres:5432/destinations?sslmode=disable
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - travel_network
+    restart: unless-stopped
+
+  # Frontend (cho phát triển)
+  frontend:
+    build: ./frontend
+    container_name: travel_frontend
+    environment:
+      VITE_BACKEND_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - travel_network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
+
+volumes:
+  postgres_data:
+
+networks:
+  travel_network:
+    driver: bridge
