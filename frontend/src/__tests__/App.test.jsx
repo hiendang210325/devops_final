@@ -2,23 +2,25 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import App from "../App.jsx";
 
-// Mock fetch toàn cục
-global.fetch = vi.fn();
-
 describe("App Component", () => {
   beforeEach(() => {
     fetch.mockClear();
+    // Mock fetch để trả về Promise mặc định cho các test không cần API
+    fetch.mockResolvedValue({
+      ok: true,
+      json: async () => []
+    });
   });
 
-  it("renders heading", () => {
+  it("renders heading", async () => {
     render(<App />);
-    const heading = screen.getByText(/Khám Phá Việt Nam/i);
+    const heading = await screen.findByText(/Khám Phá Việt Nam/i);
     expect(heading).toBeInTheDocument();
   });
 
-  it("renders hero section", () => {
+  it("renders hero section", async () => {
     render(<App />);
-    const heroText = screen.getByText(/Những Điểm Đến Nổi Bật/i);
+    const heroText = await screen.findByText(/Những Điểm Đến Nổi Bật/i);
     expect(heroText).toBeInTheDocument();
   });
 
