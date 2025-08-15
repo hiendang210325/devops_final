@@ -1,27 +1,58 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import App from "../App.jsx";
 
 describe("App Component", () => {
   beforeEach(() => {
-    fetch.mockClear();
-    // Mock fetch để trả về Promise mặc định cho các test không cần API
-    fetch.mockResolvedValue({
-      ok: true,
-      json: async () => [],
-    });
+    // Reset fetch mock before each test
+    if (fetch.mockClear) {
+      fetch.mockClear();
+    }
+    // Default mock - trả về empty array để test không bị hang
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([]),
+      })
+    );
   });
 
   it("renders heading", async () => {
     render(<App />);
-    const heading = await screen.findByText(/Khám Phá Việt Nam/i);
+    // Tìm chính xác heading trong nav-brand
+    const heading = screen.getByRole('banner').querySelector('.nav-title');
     expect(heading).toBeInTheDocument();
+    expect(heading).toHaveTextContent('Vietnam Explorer');
   });
 
   it("renders hero section", async () => {
     render(<App />);
-    const heroText = await screen.findByText(/Những Điểm Đến Nổi Bật/i);
+    const heroText = await screen.findByText(/Điểm Đến Tuyệt Vời/i);
     expect(heroText).toBeInTheDocument();
+  });
+
+  it("renders destinations section", async () => {
+    // Mock successful API call trước khi render
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [
+        {
+          id: 1,
+          name: "Hội An",
+          description: "Ancient town",
+        },
+      ],
+    });
+
+    render(<App />);
+    
+    // Chờ và tìm text của destination thay vì section title
+    const destinationItem = await screen.findByText("Hội An");
+    expect(destinationItem).toBeInTheDocument();
+    
+    // Hoặc tìm section bằng data-testid nếu có
+    const destinationsSection = screen.getByText(/Ancient town/i);
+    expect(destinationsSection).toBeInTheDocument();
   });
 
   it("shows loading state initially", () => {
