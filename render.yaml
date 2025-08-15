@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: vietnam-explorer-backend
+    env: go
+    region: singapore
+    plan: free
+    buildCommand: cd backend && go build -o server main.go
+    startCommand: cd backend && ./server
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: MONGODB_URI
+        sync: false
+      - key: GO_VERSION
+        value: "1.21"
+    healthCheckPath: /api/health

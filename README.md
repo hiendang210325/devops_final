@@ -71,9 +71,43 @@ travel-landing/
 
 ## 🌍 Deployment
 
-- **Frontend**: Automatically deployed to Render via GitHub Actions
-- **Backend**: Automatically deployed to Netlify via GitHub Actions
+- **Frontend**: Automatically deployed to Netlify via GitHub Actions
+- **Backend**: Automatically deployed to Render via GitHub Actions
 - **Database**: MongoDB Cloud
+
+### GitHub Secrets Required
+
+For automated deployment, set up these secrets in your GitHub repository:
+
+**For Render (Backend)**:
+
+- `RENDER_SERVICE_ID`: Your Render service ID
+- `RENDER_API_KEY`: Your Render API key
+- `MONGODB_URI`: Your MongoDB connection string
+
+**For Netlify (Frontend)**:
+
+- `NETLIFY_AUTH_TOKEN`: Your Netlify personal access token
+- `NETLIFY_SITE_ID`: Your Netlify site ID
+- `VITE_BACKEND_URL`: Your backend URL on Render (e.g., `https://your-service.onrender.com`)
+
+### Manual Deployment
+
+**Deploy Backend to Render:**
+
+1. Create a new Web Service on Render
+2. Connect your GitHub repository
+3. Set build command: `go build -o main .`
+4. Set start command: `./main`
+5. Add environment variables (MONGODB_URI, PORT=8080)
+
+**Deploy Frontend to Netlify:**
+
+1. Create a new site on Netlify
+2. Connect your GitHub repository
+3. Set build command: `npm run build`
+4. Set publish directory: `dist`
+5. Add environment variable: `VITE_BACKEND_URL`
 
 ## 🧪 Testing
 
