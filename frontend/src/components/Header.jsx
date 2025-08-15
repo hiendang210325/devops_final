@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, X, MapPin, Plane } from "lucide-react";
+import { Menu, X, MapPin } from "lucide-react";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

@@ -4,25 +4,22 @@ import App from "../App.jsx";
 
 describe("App Component", () => {
   beforeEach(() => {
-    // Reset fetch mock before each test
-    if (fetch.mockClear) {
-      fetch.mockClear();
-    }
+    // Setup fetch mock
+    global.fetch = vi.fn();
+
     // Default mock - trả về empty array để test không bị hang
-    global.fetch = vi.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve([]),
-      })
-    );
+    fetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([]),
+    });
   });
 
   it("renders heading", async () => {
     render(<App />);
     // Tìm chính xác heading trong nav-brand
-    const heading = screen.getByRole('banner').querySelector('.nav-title');
+    const heading = screen.getByRole("banner").querySelector(".nav-title");
     expect(heading).toBeInTheDocument();
-    expect(heading).toHaveTextContent('Vietnam Explorer');
+    expect(heading).toHaveTextContent("Vietnam Explorer");
   });
 
   it("renders hero section", async () => {
@@ -45,11 +42,11 @@ describe("App Component", () => {
     });
 
     render(<App />);
-    
+
     // Chờ và tìm text của destination thay vì section title
     const destinationItem = await screen.findByText("Hội An");
     expect(destinationItem).toBeInTheDocument();
-    
+
     // Hoặc tìm section bằng data-testid nếu có
     const destinationsSection = screen.getByText(/Ancient town/i);
     expect(destinationsSection).toBeInTheDocument();
