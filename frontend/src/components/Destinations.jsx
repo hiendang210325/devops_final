@@ -14,7 +14,7 @@ const DestinationCard = ({ destination }) => {
         "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&h=400&fit=crop&q=80",
       Sapa: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop&q=80",
       "Mekong Delta":
-        "https://images.unsplash.com/photo-1569019387966-83bb90f5e446?w=600&h=400&fit=crop&q=80",
+        "https://khanhantravel.com.vn/backend/web/uploads/images/1665471151_301520891_498737665592641_7884737262358814171_n-1024x683.jpg",
       "Phú Quốc":
         "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=600&h=400&fit=crop&q=80",
     };
