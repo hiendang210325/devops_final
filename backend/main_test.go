@@ -6,7 +6,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"database/sql"
 )
+
+var db *sql.DB
 
 func TestHealthCheck(t *testing.T) {
 	// Skip test nếu không có database connection
@@ -154,4 +157,4 @@ func TestCreateDestinationEmptyFields(t *testing.T) {
 		t.Errorf("handler trả về status code sai: got %v want %v",
 			status, http.StatusBadRequest)
 	}
-} 
+}

@@ -7,14 +7,14 @@ Ahoy matey! Welcome to our travel landing page project showcasing the beauty of 
 This is a complete DevOps project featuring:
 
 - **Frontend**: ReactJS landing page deployed on Render
-- **Backend**: Golang REST API with PostgreSQL deployed on Netlify
+- **Backend**: Golang REST API with MongoDB Cloud deployed on Netlify
 - **CI/CD**: Automated deployment using GitHub Actions
 
 ## 🏗️ Project Structure
 
 ```
 travel-landing/
-├── backend/          # Golang REST API + PostgreSQL
+├── backend/          # Golang REST API + MongoDB Cloud
 ├── frontend/         # ReactJS landing page
 ├── .github/workflows/
 │   ├── frontend.yml
@@ -28,7 +28,7 @@ travel-landing/
 
 - Node.js 18+
 - Go 1.21+
-- PostgreSQL
+- MongoDB Cloud Account
 - Git
 
 ### Local Development
@@ -53,27 +53,27 @@ travel-landing/
    ```bash
    cd backend
    go mod tidy
+
+   # Tạo file .env với MongoDB connection string
+   cp .env.example .env
+   # Chỉnh sửa .env và thay thế <db_password> bằng password thực tế
+
    go run main.go
    ```
 
-4. **Database Setup**
+4. **MongoDB Setup**
 
-   ```sql
-   CREATE TABLE destinations (
-     id SERIAL PRIMARY KEY,
-     name VARCHAR(100),
-     description TEXT
-   );
-
-   INSERT INTO destinations (name, description)
-   VALUES ('Hội An', 'Ancient town with lanterns and heritage.');
-   ```
+   - Tạo tài khoản MongoDB Cloud tại https://cloud.mongodb.com
+   - Tạo cluster mới
+   - Thiết lập database user và password
+   - Whitelist IP address
+   - Sao chép connection string vào file .env
 
 ## 🌍 Deployment
 
 - **Frontend**: Automatically deployed to Render via GitHub Actions
 - **Backend**: Automatically deployed to Netlify via GitHub Actions
-- **Database**: PostgreSQL (local/cloud)
+- **Database**: MongoDB Cloud
 
 ## 🧪 Testing
 
@@ -92,7 +92,7 @@ go test ./...
 Create a `.env` file in the backend directory:
 
 ```
-DATABASE_URL=postgres://postgres@localhost:5432/travel
+MONGODB_URI=mongodb+srv://hiendang:<db_password>@cluster0.83zr5s5.mongodb.net/travel_app?retryWrites=true&w=majority
 PORT=8080
 ```
 
@@ -101,10 +101,10 @@ PORT=8080
 - ✅ Automated CI/CD pipeline
 - ✅ Unit testing
 - ✅ Environment-based deployment
-- ✅ Database integration
+- ✅ MongoDB Cloud integration
 - ✅ Modern web technologies
 
 ---
 
 _Built with ❤️ and ☠️ for DevOps learning_
-"# Trigger new workflow" 
+"# Trigger new workflow"

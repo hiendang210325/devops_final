@@ -1,7 +1,7 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -10,14 +10,18 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"github.com/lib/pq"
 	"github.com/rs/cors"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Destination struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Name        string             `json:"name" bson:"name"`
+	Description string             `json:"description" bson:"description"`
+	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
 }
 
 type HealthResponse struct {
@@ -26,7 +30,10 @@ type HealthResponse struct {
 	Message   string    `json:"message"`
 }
 
-var db *sql.DB
+var (
+	client         *mongo.Client
+	destinationCol *mongo.Collection
+)
 
 func main() {
 	// Load .env file
@@ -35,28 +42,38 @@ func main() {
 		log.Println("Không tìm thấy file .env, sử dụng biến môi trường hệ thống")
 	}
 
-	// Lấy URL database từ biến môi trường
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		log.Println("DATABASE_URL không được thiết lập, sử dụng kết nối local mặc định")
-		dbURL = "postgres://postgres@localhost:5432/destinations?sslmode=disable"
+	// Lấy MongoDB URI từ biến môi trường
+	mongoURI := os.Getenv("MONGODB_URI")
+	if mongoURI == "" {
+		log.Fatal("MONGODB_URI không được thiết lập. Vui lòng thiết lập biến môi trường MONGODB_URI")
 	}
 
-	// Kết nối đến database
-	db, err = sql.Open("postgres", dbURL)
+	// Kết nối đến MongoDB
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err = mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))
 	if err != nil {
-		log.Fatal("Lỗi kết nối database:", err)
+		log.Fatal("Lỗi kết nối MongoDB:", err)
 	}
-	defer db.Close()
+	defer func() {
+		if err = client.Disconnect(context.TODO()); err != nil {
+			log.Printf("Lỗi ngắt kết nối MongoDB: %v", err)
+		}
+	}()
 
-	// Test kết nối database
-	err = db.Ping()
+	// Test kết nối MongoDB
+	err = client.Ping(ctx, nil)
 	if err != nil {
-		log.Fatal("Lỗi ping database:", err)
+		log.Fatal("Lỗi ping MongoDB:", err)
 	}
-	log.Println("Kết nối database thành công")
+	log.Println("Kết nối MongoDB thành công")
 
-	// Khởi tạo database với dữ liệu mẫu
+	// Khởi tạo collection
+	database := client.Database("travel_app")
+	destinationCol = database.Collection("destinations")
+
+	// Khởi tạo dữ liệu mẫu
 	initDatabase()
 
 	// Tạo router
@@ -84,77 +101,80 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("🏴‍☠️ Travel Backend Server đang khởi động trên port %s", port)
+	log.Printf("🏴‍☠️ Travel Backend Server đang khởi động trên port %s với MongoDB", port)
 	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
 
 func initDatabase() {
-	// Tạo bảng destinations nếu chưa tồn tại
-	createTableSQL := `
-	CREATE TABLE IF NOT EXISTS destinations (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(100) NOT NULL,
-		description TEXT NOT NULL,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);`
-
-	_, err := db.Exec(createTableSQL)
-	if err != nil {
-		log.Printf("Lỗi tạo bảng: %v", err)
-		return
-	}
+	ctx := context.Background()
 
 	// Kiểm tra xem đã có dữ liệu chưa
-	var count int
-	err = db.QueryRow("SELECT COUNT(*) FROM destinations").Scan(&count)
+	count, err := destinationCol.CountDocuments(ctx, bson.D{})
 	if err != nil {
 		log.Printf("Lỗi kiểm tra số lượng destinations: %v", err)
 		return
 	}
 
-	// Chèn dữ liệu mẫu nếu bảng trống
+	// Chèn dữ liệu mẫu nếu collection trống
 	if count == 0 {
-		insertSQL := `
-		INSERT INTO destinations (name, description) VALUES 
-		('Hội An', 'Ancient town with lanterns and heritage.'),
-		('Hạ Long Bay', 'Beautiful bay with limestone islands.'),
-		('Sapa', 'Mountainous region with ethnic minorities.'),
-		('Mekong Delta', 'River life and floating markets.'),
-		('Phú Quốc', 'Tropical island paradise.');`
+		sampleDestinations := []interface{}{
+			Destination{
+				Name:        "Hội An",
+				Description: "Ancient town with lanterns and heritage.",
+				CreatedAt:   time.Now(),
+			},
+			Destination{
+				Name:        "Hạ Long Bay",
+				Description: "Beautiful bay with limestone islands.",
+				CreatedAt:   time.Now(),
+			},
+			Destination{
+				Name:        "Sapa",
+				Description: "Mountainous region with ethnic minorities.",
+				CreatedAt:   time.Now(),
+			},
+			Destination{
+				Name:        "Mekong Delta",
+				Description: "River life and floating markets.",
+				CreatedAt:   time.Now(),
+			},
+			Destination{
+				Name:        "Phú Quốc",
+				Description: "Tropical island paradise.",
+				CreatedAt:   time.Now(),
+			},
+		}
 
-		_, err = db.Exec(insertSQL)
+		_, err = destinationCol.InsertMany(ctx, sampleDestinations)
 		if err != nil {
 			log.Printf("Lỗi chèn dữ liệu mẫu: %v", err)
 		} else {
-			log.Println("Dữ liệu destinations mẫu đã được chèn thành công")
+			log.Println("Dữ liệu destinations mẫu đã được chèn thành công vào MongoDB")
 		}
 	}
 }
 
 func getDestinations(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.Query("SELECT id, name, description FROM destinations ORDER BY id")
+	ctx := context.Background()
+
+	cursor, err := destinationCol.Find(ctx, bson.D{})
 	if err != nil {
 		log.Printf("Lỗi truy vấn destinations: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
+	defer cursor.Close(ctx)
 
 	var destinations []Destination
-	for rows.Next() {
-		var d Destination
-		err := rows.Scan(&d.ID, &d.Name, &d.Description)
-		if err != nil {
-			log.Printf("Lỗi scan destination: %v", err)
-			continue
-		}
-		destinations = append(destinations, d)
-	}
-
-	if err = rows.Err(); err != nil {
-		log.Printf("Lỗi lặp destinations: %v", err)
+	if err = cursor.All(ctx, &destinations); err != nil {
+		log.Printf("Lỗi decode destinations: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
+	}
+
+	// Nếu không có dữ liệu, trả về mảng rỗng thay vì null
+	if destinations == nil {
+		destinations = []Destination{}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -174,18 +194,19 @@ func createDestination(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var id int
-	err = db.QueryRow("INSERT INTO destinations (name, description) VALUES ($1, $2) RETURNING id",
-		destination.Name, destination.Description).Scan(&id)
+	// Thiết lập thời gian tạo
+	destination.CreatedAt = time.Now()
+
+	ctx := context.Background()
+	result, err := destinationCol.InsertOne(ctx, destination)
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			log.Printf("Lỗi database: %v", pqErr)
-		}
+		log.Printf("Lỗi tạo destination: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	destination.ID = id
+	// Gán ID được tạo từ MongoDB
+	destination.ID = result.InsertedID.(primitive.ObjectID)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -193,14 +214,17 @@ func createDestination(w http.ResponseWriter, r *http.Request) {
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
-	// Kiểm tra kết nối database
-	err := db.Ping()
+	// Kiểm tra kết nối MongoDB
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err := client.Ping(ctx, nil)
 	status := "healthy"
-	message := "🏴‍☠️ Travel Backend đang chạy mượt mà, thuyền trưởng!"
+	message := "🏴‍☠️ Travel Backend đang chạy mượt mà với MongoDB, thuyền trưởng!"
 
 	if err != nil {
 		status = "unhealthy"
-		message = "☠️ Kết nối database thất bại!"
+		message = "☠️ Kết nối MongoDB thất bại!"
 		log.Printf("Health check thất bại: %v", err)
 	}
 
@@ -214,4 +238,4 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// Trigger backend workflow 
+// Trigger backend workflow

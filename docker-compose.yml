@@ -1,33 +1,15 @@
 version: "3.8"
 
 services:
-  # Database PostgreSQL
-  postgres:
-    image: postgres:15-alpine
-    container_name: travel_postgres
-    environment:
-      POSTGRES_DB: destinations
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - travel_network
-
-  # Backend API
+  # Backend API with MongoDB Cloud
   backend:
     build: ./backend
     container_name: travel_backend
     environment:
-      DATABASE_URL: postgres://postgres:password@postgres:5432/destinations?sslmode=disable
+      MONGODB_URI: mongodb+srv://hiendang:<db_password>@cluster0.83zr5s5.mongodb.net/travel_app?retryWrites=true&w=majority
       PORT: 8080
     ports:
       - "8080:8080"
-    depends_on:
-      - postgres
     networks:
       - travel_network
     restart: unless-stopped
@@ -48,9 +30,6 @@ services:
       - ./frontend:/app
       - /app/node_modules
     command: npm run dev
-
-volumes:
-  postgres_data:
 
 networks:
   travel_network:
