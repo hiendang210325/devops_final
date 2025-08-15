@@ -12,7 +12,7 @@
   status = 200
 
 [context.production.environment]
-  VITE_BACKEND_URL = "https://vietnam-explorer-backend.onrender.com"
+  VITE_BACKEND_URL = "https://devops-backend-t8kd.onrender.com"
 
 [context.deploy-preview.environment]
-  VITE_BACKEND_URL = "https://vietnam-explorer-backend.onrender.com"
+  VITE_BACKEND_URL = "https://devops-backend-t8kd.onrender.com"
