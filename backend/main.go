@@ -84,6 +84,7 @@ func main() {
 	api.HandleFunc("/destinations", getDestinations).Methods("GET")
 	api.HandleFunc("/destinations", createDestination).Methods("POST")
 	api.HandleFunc("/health", healthCheck).Methods("GET")
+	api.HandleFunc("/health1", healthCheck1).Methods("GET")
 
 	// Cấu hình CORS
 	c := cors.New(cors.Options{
@@ -226,6 +227,31 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 		status = "unhealthy"
 		message = "☠️ Kết nối MongoDB thất bại!"
 		log.Printf("Health check thất bại: %v", err)
+	}
+
+	response := HealthResponse{
+		Status:    status,
+		Timestamp: time.Now(),
+		Message:   message,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func healthCheck1(w http.ResponseWriter, r *http.Request) {
+	// Kiểm tra kết nối MongoDB cho health1
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err := client.Ping(ctx, nil)
+	status := "healthy"
+	message := "🏴‍☠️ Travel Backend Health1 - Hệ thống đang hoạt động tốt!"
+
+	if err != nil {
+		status = "unhealthy"
+		message = "☠️ Health1 - Kết nối MongoDB thất bại!"
+		log.Printf("Health1 check thất bại: %v", err)
 	}
 
 	response := HealthResponse{

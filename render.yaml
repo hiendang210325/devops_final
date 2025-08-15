@@ -13,4 +13,4 @@ services:
         sync: false
       - key: GO_VERSION
         value: "1.21"
-    healthCheckPath: /api/health
+    healthCheckPath: /api/health1
