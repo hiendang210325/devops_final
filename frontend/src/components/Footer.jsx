@@ -18,8 +18,7 @@ const Footer = () => {
               <span className="footer-title">Vietnam Explorer</span>
             </div>
             <p className="footer-description">
-              Khám phá vẻ đẹp tuyệt vời của Việt Nam cùng chúng tôi. Những trải
-              nghiệm du lịch đáng nhớ đang chờ đợi bạn.
+              Hello VTC 
             </p>
             <div className="social-links">
               <a href="#" className="social-link">
